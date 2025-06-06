@@ -1,12 +1,13 @@
 # encoding: utf-8
 
 """
-Prepares markdown release notes for GitHub releases.
+Prepares markdown release notes for GitHub releases and updates CHANGELOG.md.
 """
 
 import os
 import re
 import sys
+from pathlib import Path
 from typing import List, Optional, Tuple
 
 if "TAG" in os.environ:
@@ -21,6 +22,7 @@ REMOVED_HEADER = "### Removed 👋"
 
 
 def get_change_log_notes() -> str:
+    """Extract manual release notes from CHANGELOG.md for the current version."""
     in_current_section = False
     current_section_notes: List[str] = []
     with open("CHANGELOG.md") as changelog:
@@ -31,6 +33,8 @@ def get_change_log_notes() -> str:
                 in_current_section = True
                 continue
             if in_current_section:
+                if line.startswith("## ["):  # Hit next version section
+                    break
                 if line.startswith("### Added"):
                     line = ADDED_HEADER + "\n"
                 elif line.startswith("### Changed"):
@@ -42,6 +46,7 @@ def get_change_log_notes() -> str:
                 current_section_notes.append(line)
     if current_section_notes:
         return "## What's new\n\n" + "".join(current_section_notes).strip() + "\n"
+    return ""
 
 def parse_version(version_str: str) -> Tuple[Tuple[int, int, int], Optional[str]]:
     """
@@ -107,7 +112,8 @@ def compare_versions(v1: str, v2: str) -> int:
             return 0
 
 
-def get_commit_history() -> str:
+def get_merged_pull_requests() -> str:
+    """Get merged pull requests between the last tag and current version."""
     current_version = f"v{TAG}"
     _, current_prerelease = parse_version(current_version)
 
@@ -117,9 +123,7 @@ def get_commit_history() -> str:
     # Get all tags sorted by version, latest first.
     all_tags = os.popen("git tag -l --sort=-version:refname 'v*'").read().split("\n")
 
-    # Out of `all_tags`, find the latest previous version so that we can collect all
-    # commits between that version and the new version we're about to publish.
-    # Note that we ignore pre-releases unless the new version is also a pre-release.
+    # Find the latest previous version
     last_tag: Optional[str] = None
     for tag in all_tags:
         if not tag.strip():  # could be blank line
@@ -136,16 +140,110 @@ def get_commit_history() -> str:
             last_tag = tag
             break
 
+    # Get merge commits (pull requests) between tags
     if last_tag is not None:
-        commits = os.popen(f"git log {last_tag}..v{TAG} --oneline --first-parent").read()
+        merge_commits = os.popen(f"git log {last_tag}..v{TAG} --merges --pretty=format:'%s' --first-parent").read()
     else:
-        commits = os.popen("git log --oneline --first-parent").read()
-    return "## Commits\n\n" + commits
+        merge_commits = os.popen("git log --merges --pretty=format:'%s' --first-parent").read()
+    
+    if not merge_commits.strip():
+        return ""
+    
+    # Parse merge commits to extract PR information
+    pr_lines = []
+    for line in merge_commits.split('\n'):
+        if line.strip():
+            # Try to extract PR info from merge commit message
+            # Format: "Merge pull request #123 from user/branch"
+            pr_match = re.search(r'Merge pull request #(\d+) from ([^/]+)/', line)
+            if pr_match:
+                pr_number = pr_match.group(1)
+                author = pr_match.group(2)
+                
+                # Get PR title from GitHub API or git log
+                pr_title = get_pr_title(pr_number)
+                if pr_title:
+                    # Get repository URL for the link
+                    repo_url = get_repo_url()
+                    pr_lines.append(f"* {pr_title} by @{author} in {repo_url}/pull/{pr_number}")
+    
+    if pr_lines:
+        return "## What's Changed\n" + "\n".join(pr_lines) + "\n"
+    return ""
+
+
+def get_pr_title(pr_number: str) -> Optional[str]:
+    """Get PR title from git log or return a placeholder."""
+    # Try to get the PR title from the commit that was merged
+    try:
+        # Get the merge commit and find the actual PR commit
+        merge_commit = os.popen(f"git log --merges --grep='#{pr_number}' --pretty=format:'%H' -1").read().strip()
+        if merge_commit:
+            # Get the second parent (the PR commit)
+            pr_commit = os.popen(f"git log {merge_commit}^2 --pretty=format:'%s' -1").read().strip()
+            if pr_commit:
+                return pr_commit
+    except:
+        pass
+    
+    return f"Pull request #{pr_number}"
+
+
+def get_repo_url() -> str:
+    """Get the repository URL from git config."""
+    repo_url = os.popen("git config --local --get remote.origin.url").read().strip()
+    # Convert SSH to HTTPS if needed
+    if repo_url.startswith("git@github.com:"):
+        repo_url = repo_url.replace("git@github.com:", "https://github.com/")
+    # Remove .git suffix
+    if repo_url.endswith(".git"):
+        repo_url = repo_url[:-4]
+    return repo_url
+
+
+def update_changelog_directly(release_content: str) -> None:
+    """Update CHANGELOG.md directly with the release content."""
+    changelog_path = Path('CHANGELOG.md')
+    with open(changelog_path, 'r') as f:
+        content = f.read()
+
+    # Find the version section and replace it with release notes content
+    version_pattern = rf'(## \[v{re.escape(TAG)}\][^\n]*\n)(\n*)(.*?)(?=\n## \[v|\n## \[|\Z)'
+
+    def replace_version_section(match):
+        header = match.group(1)
+        return header + '\n' + release_content.strip() + '\n\n'
+
+    updated_content = re.sub(version_pattern, replace_version_section, content, flags=re.DOTALL)
+
+    # Write back to CHANGELOG.md
+    with open(changelog_path, 'w') as f:
+        f.write(updated_content)
+
+    print(f"✓ Updated CHANGELOG.md with release notes for v{TAG}")
 
 
 def main():
-    print(get_change_log_notes())
-    print(get_commit_history())
+    """Generate release notes and update CHANGELOG.md."""
+    # Get manual notes from changelog
+    manual_notes = get_change_log_notes()
+    
+    # Get merged pull requests
+    pr_notes = get_merged_pull_requests()
+    
+    # Combine all content for release notes
+    release_content = ""
+    if manual_notes:
+        release_content += manual_notes + "\n"
+    if pr_notes:
+        release_content += pr_notes
+    
+    # Output release notes to stdout (for RELEASE_NOTES-{TAG}.md file)
+    print(release_content.strip())
+    
+    # Also update CHANGELOG.md directly
+    if release_content.strip():
+        update_changelog_directly(release_content)
 
 
 if __name__ == "__main__":

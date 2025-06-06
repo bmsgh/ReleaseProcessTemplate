@@ -28,13 +28,10 @@ REPO_URL=${REPO_URL%".git"}
 echo "Preparing CHANGELOG.md for version ${TAG}..."
 python3 scripts/prepare_changelog.py $REPO_URL $TAG
 
-echo "Generating RELEASE_NOTES-${TAG}.md..."
+echo "Generating RELEASE_NOTES-${TAG}.md and updating CHANGELOG.md..."
 python3 scripts/release_notes.py $TAG > RELEASE_NOTES-${TAG}.md
 
-echo "Updating CHANGELOG.md with release notes content..."
-python3 scripts/update_changelog.py $TAG RELEASE_NOTES-${TAG}.md
-
-echo "✓ RELEASE_NOTES-${TAG}.md generated"
+echo "✓ RELEASE_NOTES-${TAG}.md generated and CHANGELOG.md updated"
 echo ""
 echo "Files created/updated:"
 echo "  - CHANGELOG.md (populated with v${TAG} release notes)"

@@ -13,7 +13,7 @@ This (vaguely) follows the guidance of [Python Package Template](https://github.
     ```
 
     This will
-    1. Update CHANGELOG.md
+    1. Update CHANGELOG.md with manual notes and merged pull requests
     2. Create a new tag in git
     3. Generate release notes
     4. Create a release in git
