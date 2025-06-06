@@ -19,11 +19,31 @@ from datetime import datetime
 from pathlib import Path
 import sys
 
-#from my_package.version import VERSION
-REPO=sys.argv[1]
-VERSION=sys.argv[2]
-
 def main():
+    # Check for required arguments
+    if len(sys.argv) != 3:
+        print("ERROR: Missing required arguments!")
+        print("Usage: python3 prepare_changelog.py <REPO_URL> <VERSION>")
+        print("  REPO_URL: Repository URL (e.g., https://github.com/user/repo)")
+        print("  VERSION:  Version number (e.g., 2.1.2)")
+        sys.exit(1)
+
+    REPO = sys.argv[1]
+    VERSION = sys.argv[2]
+
+    # Validate inputs
+    if not REPO.strip():
+        print("ERROR: REPO_URL cannot be empty!")
+        sys.exit(1)
+
+    if not VERSION.strip():
+        print("ERROR: VERSION cannot be empty!")
+        sys.exit(1)
+
+    prepare_changelog(REPO, VERSION)
+
+def prepare_changelog(REPO, VERSION):
+    """Prepare CHANGELOG.md by creating or updating it with the given repository URL and version."""
     changelog = Path("CHANGELOG.md")
 
     if not changelog.exists():
