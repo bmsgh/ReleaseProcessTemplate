@@ -40,8 +40,8 @@ def get_change_log_notes() -> str:
                 elif line.startswith("### Removed"):
                     line = REMOVED_HEADER + "\n"
                 current_section_notes.append(line)
-    assert current_section_notes, f"Expected to find notes in section '## [v{TAG}]'"
-    return "## What's new\n\n" + "".join(current_section_notes).strip() + "\n"
+    if current_section_notes:
+        return "## What's new\n\n" + "".join(current_section_notes).strip() + "\n"
 
 def parse_version(version_str: str) -> Tuple[Tuple[int, int, int], Optional[str]]:
     """
