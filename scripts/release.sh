@@ -7,7 +7,7 @@ TAG=$1
 read -p "Creating new release for v$TAG. Do you want to continue? [Y/n] " prompt
 
 if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]]; then
-    REPO_URL=$(git config --local --get remote.origin.url)
+    REPO_URL=$(git config --local --get remote.origin.url | sed 's|\(https://\).*@|\1|')
     REPO_URL=${REPO_URL%".git"}
 
     if [ $OSTYPE == "darwin22" ]; then
@@ -22,6 +22,7 @@ if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]
     git add launcher/src/pipeline_config.py
 
     python3 scripts/prepare_changelog.py $REPO_URL $TAG
+    # Manually update the CHANGELOG.md
     git add CHANGELOG.md
     git commit -m "Bump version to $TAG for release" || true && git push
     echo "Creating new git tag $TAG"
@@ -37,7 +38,7 @@ if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]
       --repo ${REPO_URL}.git \
       v${TAG}
 
-    make VERSION=${TAG} build-launcher 
+    make VERSION=${TAG} build-launcher
     make VERSION=${TAG} sevenbridges-push-launcher
     make VERSION=${TAG} arvados-push-launcher
     make VERSION=${TAG} sevenbridges-push-workflows

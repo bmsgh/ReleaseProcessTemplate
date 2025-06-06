@@ -1,3 +1,20 @@
+'''
+Prepares CHANGELOG.md
+
+On inital run, if no changelog is present, a CHANGELOG.md file is created with an empty Unreleased section and [v$TAG] section.
+On subsequent runs, Unreleased is updated to [v$TAG] and a new Unreleased section is created.
+
+This script does NOT add anything to the Unreleased or version section, it only converts the Unreleased section to [v$TAG].  
+It is currently up to the user to populate the Unreleased section with informative information.
+
+It is option to use the following subsections, but beneficial for readability.
+
+### Added
+### Changed
+### Fixed
+### Removed
+
+'''
 from datetime import datetime
 from pathlib import Path
 import sys

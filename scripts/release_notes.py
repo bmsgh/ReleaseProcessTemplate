@@ -2,6 +2,8 @@
 
 """
 Prepares markdown release notes for GitHub releases.
+
+Find the section [v{TAG}] in CHANGELOG.md, 
 """
 
 import os
@@ -41,7 +43,7 @@ def get_change_log_notes() -> str:
                 elif line.startswith("### Removed"):
                     line = REMOVED_HEADER + "\n"
                 current_section_notes.append(line)
-    assert current_section_notes
+    assert current_section_notes, f"Expected to find notes in section '## [v{TAG}]'"
     return "## What's new\n\n" + "".join(current_section_notes).strip() + "\n"
 
 
@@ -68,7 +70,7 @@ def get_commit_history() -> str:
             last_tag = tag
             break
     if last_tag is not None:
-        commits = os.popen(f"git log {last_tag}..{TAG} --oneline --first-parent").read()
+        commits = os.popen(f"git log {last_tag}..v{TAG} --oneline --first-parent").read()
     else:
         commits = os.popen("git log --oneline --first-parent").read()
     return "## Commits\n\n" + commits
