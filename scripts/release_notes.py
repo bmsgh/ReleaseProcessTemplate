@@ -2,8 +2,6 @@
 
 """
 Prepares markdown release notes for GitHub releases.
-
-Find the section [v{TAG}] in CHANGELOG.md, 
 """
 
 import os
