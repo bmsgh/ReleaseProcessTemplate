@@ -201,7 +201,7 @@ def get_repo_url() -> str:
     return repo_url
 
 
-def update_changelog_directly(release_content: str) -> None:
+def update_changelog(release_content: str) -> None:
     """Update CHANGELOG.md directly with the release content."""
     changelog_path = Path('CHANGELOG.md')
     with open(changelog_path, 'r') as f:
@@ -243,7 +243,7 @@ def main():
         # Output complete release notes to stdout (for RELEASE_NOTES-{TAG}.md file)
         print(release_content)
         # Also update CHANGELOG.md directly
-        update_changelog_directly(release_content)
+        update_changelog(release_content)
     else:
         print("No release notes generated - no manual notes or merged pull requests found.")
 
