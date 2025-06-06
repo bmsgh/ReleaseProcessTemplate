@@ -7,7 +7,9 @@ This (vaguely) follows the guidance of [Python Package Template](https://github.
 1. Run the release script:
 
     ```bash
-    ./scripts/release.sh <TAG>
+    TAG=<Version number for the release (do not include "v" prefix)>
+    ./scripts/write_release_notes.sh $TAG
+    ./scripts/release.sh $TAG
     ```
 
     This will
