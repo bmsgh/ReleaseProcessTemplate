@@ -45,7 +45,7 @@ def get_change_log_notes() -> str:
                     line = REMOVED_HEADER + "\n"
                 current_section_notes.append(line)
     if current_section_notes:
-        return "## What's new\n\n" + "".join(current_section_notes).strip() + "\n"
+        return "## What's new\n\n" + "".join(current_section_notes).strip()
     return ""
 
 def parse_version(version_str: str) -> Tuple[Tuple[int, int, int], Optional[str]]:
@@ -232,18 +232,20 @@ def main():
     pr_notes = get_merged_pull_requests()
     
     # Combine all content for release notes
-    release_content = ""
+    release_content_parts = []
     if manual_notes:
-        release_content += manual_notes + "\n"
+        release_content_parts.append(manual_notes)
     if pr_notes:
-        release_content += pr_notes
+        release_content_parts.append(pr_notes)
     
-    # Output release notes to stdout (for RELEASE_NOTES-{TAG}.md file)
-    print(release_content.strip())
-    
-    # Also update CHANGELOG.md directly
-    if release_content.strip():
+    if release_content_parts:
+        release_content = "\n\n".join(release_content_parts)
+        # Output complete release notes to stdout (for RELEASE_NOTES-{TAG}.md file)
+        print(release_content)
+        # Also update CHANGELOG.md directly
         update_changelog_directly(release_content)
+    else:
+        print("No release notes generated - no manual notes or merged pull requests found.")
 
 
 if __name__ == "__main__":
