@@ -22,7 +22,7 @@ fi
 
 echo "Preparing release notes for version: $TAG"
 
-REPO_URL=$(git config --local --get remote.origin.url | sed 's|\(https://\).*@|\1|')
+REPO_URL=$(git config --local --get remote.origin.url | sed 's|\(https://\).*@|\1|' | sed 's|git@|https://|')
 REPO_URL=${REPO_URL%".git"}
 
 echo "Preparing CHANGELOG.md for version ${TAG}..."
