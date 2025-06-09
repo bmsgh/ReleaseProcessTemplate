@@ -1,10 +1,12 @@
 '''
 Prepares CHANGELOG.md
 
-On inital run, if no changelog is present, a CHANGELOG.md file is created with an empty Unreleased section and [v$TAG] section.
+On inital run, if no changelog is present, a CHANGELOG.md file is created with an
+empty Unreleased section and [v$TAG] section.
 On subsequent runs, Unreleased is updated to [v$TAG] and a new Unreleased section is created.
 
-This script does NOT add anything to the Unreleased or version section, it only converts the Unreleased section to [v$TAG].  
+This script does NOT add anything to the Unreleased or version section, it only converts
+the Unreleased section to [v$TAG].
 It is currently up to the user to populate the Unreleased section with informative information.
 
 It is option to use the following subsections, but beneficial for readability.
@@ -20,6 +22,7 @@ from pathlib import Path
 import sys
 
 def main():
+    """ Check inputs and prepare the CHANGELOG.md file. """
     # Check for required arguments
     if len(sys.argv) != 3:
         print("ERROR: Missing required arguments!")
@@ -47,10 +50,10 @@ def prepare_changelog(REPO, VERSION):
     changelog = Path("CHANGELOG.md")
 
     if not changelog.exists():
-        with changelog.open(mode='w') as f:
-            f.write(f"## Changelog\n\n## Unreleased\n")
+        with changelog.open(mode='w', encoding="utf-8") as f:
+            f.write("## Changelog\n\n## Unreleased\n")
 
-    with changelog.open() as f:
+    with changelog.open(encoding="utf-8") as f:
         lines = f.readlines()
 
     insert_index: int = -1
@@ -74,7 +77,7 @@ def prepare_changelog(REPO, VERSION):
         f"{datetime.now().strftime('%Y-%m-%d')}\n",
     )
 
-    with changelog.open("w") as f:
+    with changelog.open("w", encoding = "utf-8") as f:
         f.writelines(lines)
 
 

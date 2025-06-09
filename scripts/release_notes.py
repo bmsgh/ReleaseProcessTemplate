@@ -144,9 +144,13 @@ def get_merged_pull_requests() -> str:
 
     # Get merge commits (pull requests) between tags
     if last_tag is not None:
-        merge_commits = os.popen(f"git log {last_tag}..v{TAG} --merges --pretty=format:'%s' --first-parent").read()
+        merge_commits = os.popen(
+            f"git log {last_tag}..v{TAG} --merges --pretty=format:'%s' --first-parent"
+            ).read()
     else:
-        merge_commits = os.popen("git log --merges --pretty=format:'%s' --first-parent").read()
+        merge_commits = os.popen(
+            "git log --merges --pretty=format:'%s' --first-parent"
+            ).read()
 
     if not merge_commits.strip():
         return ""
@@ -177,15 +181,19 @@ def get_pr_title_and_author(pr_number: str) -> Tuple[str, str]:
     # Try to get the PR title and author from the commit that was merged
     try:
         # Get the merge commit and find the actual PR commit
-        merge_commit = os.popen(f"git log --merges --grep='#{pr_number}' --pretty=format:'%H' -1").read().strip()
+        merge_commit = os.popen(
+            f"git log --merges --grep='#{pr_number}' --pretty=format:'%H' -1"
+            ).read().strip()
         if merge_commit:
             # Get the second parent (the PR commit) - this is the actual PR commit
             # Get both title (subject) and author name from the PR commit
-            pr_commit_info = os.popen(f"git log {merge_commit}^2 --pretty=format:'%s|%an' -1").read().strip()
+            pr_commit_info = os.popen(
+                f"git log {merge_commit}^2 --pretty=format:'%s|%an' -1"
+                ).read().strip()
             if pr_commit_info and '|' in pr_commit_info:
                 title, author = pr_commit_info.split('|', 1)
                 return title.strip(), author.strip()
-    except:
+    except Exception:
         pass
 
     return f"Pull request #{pr_number}", "unknown"
